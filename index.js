@@ -1,13 +1,6 @@
 import React, {Component} from 'react';
-import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
-import AsyncStorage from '@react-native-community/async-storage';
-import thunk from 'redux-thunk';
-import {persistStore, persistReducer} from 'redux-persist';
-import {PersistGate} from 'redux-persist/lib/integration/react';
-import {createStore, applyMiddleware, compose} from 'redux';
-import rootReducer from './src/reducers/index.reducer';
 import Dashboard from "./src/container/dashboard.container";
-import {Provider, connect} from 'react-redux';
+import AsyncStorage from '@react-native-community/async-storage';
 import {
     StyleSheet,
     AppRegistry,
@@ -16,17 +9,26 @@ import {
     View,
     StatusBar,
 } from 'react-native';
-
+import thunk from 'redux-thunk';
+import {persistStore, persistReducer} from 'redux-persist';
+import {PersistGate} from 'redux-persist/lib/integration/react';
+import {createStore, applyMiddleware, compose} from 'redux';
+import rootReducer from './src/reducers/index.reducer';
+import {Provider} from 'react-redux';
+import MapboxGL from '@react-native-mapbox-gl/maps';
 import {name as appName} from './app.json';
 import Colors from "./src/constants/colors.constant";
+import Config from "./src/constants/config.constant";
+import {myLocation} from "./src/helpers/util";
+import {getMyLocation, saveLocation} from "./src/actions/dashboard.action";
+
 
 /** Cria a configuração do persist-store */
 const persistConfig = {
     key: 'root',
     keyPrefix: '',
-    storage:AsyncStorage,
-    whitelist: ['user'],
-    autoMergeLevel2,
+    storage: AsyncStorage,
+    whitelist: ['dashboard'],
     timeout: null,
 };
 // eslint-disable-next-line
@@ -37,7 +39,14 @@ const store = createStore(pReducer, composeEnhancer(applyMiddleware(thunk)));
 const persistor = persistStore(store);
 
 
+MapboxGL.setAccessToken(Config.MAPBOX_KEY);
+MapboxGL.setTelemetryEnabled(true);
+
 class Root extends Component {
+
+    initLocation = async () => {
+        await store.dispatch(getMyLocation());
+    };
 
     render() {
         return (
@@ -45,6 +54,7 @@ class Root extends Component {
                 <PersistGate
                     persistor={persistor}
                     loading={<LoadingAppContent/>}
+                    onBeforeLift={this.initLocation}
                 >
                     <SafeAreaView style={styles.pageSafeAreaView}>
                         <StatusBar
@@ -61,8 +71,6 @@ class Root extends Component {
 }
 
 // "react-native-fbsdk": "^0.8.0",
-
-
 const LoadingAppContent = () => (
     <View style={styles.loadingAppContent}>
         <ActivityIndicator size="large" color={Colors.WHITE}/>

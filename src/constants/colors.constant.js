@@ -1,7 +1,8 @@
-
 const Colors = {
-   WHITE: '#ffffff',
-    BLACK:'#000000'
-
+    WHITE: '#ffffff',
+    BLACK: '#000000',
+    GREY_DARK: '#6A6A6A',
+    GREY_LIGHT: '#C3C3C3',
+    BLUE_LIGHT: '#D4FDEE',
 };
 export default Colors;

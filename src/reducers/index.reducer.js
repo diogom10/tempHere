@@ -1,8 +1,8 @@
 import { combineReducers } from 'redux';
-import user from './user.reducer';
+import dashboard from './dashboard.reducer';
 const wrapeReducer = (state, action) => rootReducer(state, action);
 const rootReducer = combineReducers({
-    user,
+    dashboard,
 });
 
 export default wrapeReducer;
