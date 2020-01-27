@@ -50,7 +50,6 @@ class Root extends Component {
             <Provider store={store}>
                 <PersistGate
                     persistor={persistor}
-                    loading={<LoadingAppContent/>}
                     onBeforeLift={this.initLocation}
                 >
                     <SafeAreaView style={styles.pageSafeAreaView}>

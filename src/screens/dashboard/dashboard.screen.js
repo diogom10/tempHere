@@ -5,7 +5,7 @@ import Colors from "../../constants/colors.constant";
 import {ListTemp} from "../../components/listTemp.component";
 import {convertToCelcius, convertToFahrenheit} from "../../helpers/util";
 import ShimmerPlaceHolder from "react-native-shimmer-placeholder";
-import {fetchingWoeid} from "../../actions/dashboard.action";
+import {fetchingWoeid, getMyLocation} from "../../actions/dashboard.action";
 
 class DashboardScreen extends Component {
 
@@ -25,9 +25,14 @@ class DashboardScreen extends Component {
     componentDidMount() {
         this.getTemperature();
     }
+    reloadTemperature = async () => {
+        await this.props.getMyLocation()
+        this.getTemperature();
+    };
 
     /*this function search the temperature based on location and woeid*/
     getTemperature = async () => {
+        this.setState({isLoad: true})
         const {location} = this.props;
         const data = await this.props.fetchingWoeid({...location});
 
@@ -40,6 +45,7 @@ class DashboardScreen extends Component {
                 this.setState({isLoad: false, dataTemperature: payload})
             }
         }
+        this.setState({isLoad: false})
     };
     /*this function search the temperature based on location and woeid*/
 
@@ -54,7 +60,7 @@ class DashboardScreen extends Component {
             )
         }
         return (
-            <TouchableOpacity onPress={this.getTemperature} style={styles.containerTempsError}>
+            <TouchableOpacity onPress={this.reloadTemperature} style={styles.containerTempsError}>
                 <Text>Não foi possivel carregar os dados</Text>
                 <Text>clique aqui e tente Novamente</Text>
             </TouchableOpacity>)
@@ -144,7 +150,7 @@ class DashboardScreen extends Component {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.BLUE_LIGHT
+        backgroundColor: Colors.BLUE_DARK
     },
     wrap: {
         width: '97%',
@@ -166,7 +172,9 @@ const styles = StyleSheet.create({
         overflow: 'hidden'
     },
     title: {
-        fontSize: 25
+        fontSize: 25,
+        color:Colors.WHITE,
+        fontFamily: "Poppins-Thin"
     },
     map: {
         width: '100%',
@@ -213,7 +221,9 @@ const styles = StyleSheet.create({
         fontSize: 19
     },
     titleOptions: {
-        fontSize: 18
+        fontSize: 18,
+        color:Colors.WHITE,
+        fontFamily: "Poppins-Thin"
     },
 
 

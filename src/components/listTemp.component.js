@@ -4,8 +4,6 @@ import Colors from "../constants/colors.constant";
 import Config from "../constants/config.constant";
 import {convertDate, convertToFahrenheit} from "../helpers/util";
 
-const sol = require('../assets/sol.png');
-
 export const ListTemp = (props) => {
     const {data, isCelsius} = props;
     let {temperature,date,type} = data;
@@ -48,11 +46,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleTemps: {
-        fontSize: 21
+        fontSize: 21,
+        fontFamily: "Poppins-ExtraLight"
+
     },
 
     image: {
         width: '50%',
         height: '50%'
     }
-})
+});
