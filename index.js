@@ -19,13 +19,12 @@ import MapboxGL from '@react-native-mapbox-gl/maps';
 import {name as appName} from './app.json';
 import Colors from "./src/constants/colors.constant";
 import Config from "./src/constants/config.constant";
-import {myLocation} from "./src/helpers/util";
 import {getMyLocation, saveLocation} from "./src/actions/dashboard.action";
 
 
 /** Cria a configuração do persist-store */
 const persistConfig = {
-    key: 'root',
+    key: 'dashboard',
     keyPrefix: '',
     storage: AsyncStorage,
     whitelist: ['dashboard'],
@@ -38,9 +37,7 @@ const composeEnhancer = compose;
 const store = createStore(pReducer, composeEnhancer(applyMiddleware(thunk)));
 const persistor = persistStore(store);
 
-
 MapboxGL.setAccessToken(Config.MAPBOX_KEY);
-MapboxGL.setTelemetryEnabled(true);
 
 class Root extends Component {
 

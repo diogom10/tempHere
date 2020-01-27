@@ -1,9 +1,11 @@
 import React, {Component} from 'react'
 import MapboxGL from '@react-native-mapbox-gl/maps';
-import {StyleSheet, Text, View, ScrollView, Switch, FlatList,TouchableOpacity} from "react-native";
+import {StyleSheet, Text, View, ScrollView, Switch, FlatList, TouchableOpacity} from "react-native";
 import Colors from "../../constants/colors.constant";
 import {ListTemp} from "../../components/listTemp.component";
 import {convertToCelcius, convertToFahrenheit} from "../../helpers/util";
+import ShimmerPlaceHolder from "react-native-shimmer-placeholder";
+import {fetchingWoeid} from "../../actions/dashboard.action";
 
 class DashboardScreen extends Component {
 
@@ -11,32 +13,45 @@ class DashboardScreen extends Component {
         super(props);
         this.state = {
             isCelsius: true,
-            isLoad: false,
-            temps: [],
+            isLoad: true,
+            dataTemperature: {
+                city: '',
+                nextTemperatures: [],
+                temperature: '',
+            }
         }
     }
 
-    componentDidMount(){
-        // this.getTemperature();
+    componentDidMount() {
+        this.getTemperature();
     }
 
+    /*this function search the temperature based on location and woeid*/
+    getTemperature = async () => {
+        const {location} = this.props;
+        const data = await this.props.fetchingWoeid({...location});
 
-    getTemperature = async () =>{
-        const {isLoad,temps} = this.state
-        temps.push(0,1,2,3,45,6);
-        this.setState({temps})
-    }
+        if (data.success) {
+            const locationTemperature = data.payload[0];
+            const {woeid} = locationTemperature;
+            const {success, payload} = await this.props.fetchingTemperature(woeid);
+            if (success) {
+                console.log('payload', payload)
+                this.setState({isLoad: false, dataTemperature: payload})
+            }
+        }
+    };
+    /*this function search the temperature based on location and woeid*/
+
+    /*This function is responsible for showing a loader if the app is looking for the temperature or showing a message if an error occurs*/
     renderLoadTemps = () => {
         const {isLoad} = this.state;
         if (isLoad) {
             return (
-                <View style={styles.containerTemps}>
-                    {/*<ShimmerPlaceHolder autoRun={true}/>*/}
-                    {/*<ShimmerPlaceHolder autoRun={true}/>*/}
-                    {/*<ShimmerPlaceHolder autoRun={true}/>*/}
+                <View style={styles.containerTempsError}>
+                    <ShimmerPlaceHolder style={styles.map} autoRun={true}/>
                 </View>
             )
-
         }
         return (
             <TouchableOpacity onPress={this.getTemperature} style={styles.containerTempsError}>
@@ -45,23 +60,64 @@ class DashboardScreen extends Component {
             </TouchableOpacity>)
     };
 
+    /*This function is responsible for showing a loader if the app is looking for the temperature or showing a message if an error occurs*/
+
+    /*This function render one point into mapview  */
+    renderMapBoxPoint() {
+        const {location} = this.props
+        return (
+            <MapboxGL.PointAnnotation
+                id='home'
+                coordinate={[location.lng,location.lat]}
+            >
+                <View style={styles.pointContainer}>
+                    <View style={styles.pointFill}/>
+                </View>
+                <MapboxGL.Callout title='I am here'/>
+            </MapboxGL.PointAnnotation>
+        )
+    }
+    /*This function render one point into mapview  */
+
     render() {
-        const {isCelsius, temps} = this.state;
-        const tempsChoice = isCelsius ? convertToCelcius(temps) : convertToFahrenheit(temps)
+        const {location} = this.props;
+        const {isCelsius, dataTemperature, isLoad} = this.state;
+        const {city, nextTemperatures, temperature} = dataTemperature;
+        console.log(location);
         return (
             <View style={styles.container}>
                 <ScrollView style={styles.wrap}>
-                    <View style={styles.containerTitle}>
-                        <Text style={styles.title}>São Paulo</Text>
-                        <Text style={styles.title}>25°</Text>
-                    </View>
-                    <View style={styles.containerMap}>
-
+                    {isLoad ? (
+                            <View style={styles.containerTitleLoad}>
+                                <ShimmerPlaceHolder style={styles.map} autoRun={true}/>
+                            </View>) :
+                        (
+                            <View style={styles.containerTitle}>
+                                <Text style={styles.title}>{city}</Text>
+                                <Text style={styles.title}>{`${temperature}°`}</Text>
+                            </View>
+                        )}
+                    <View>
+                        <MapboxGL.MapView
+                            zoomEnabled={false}
+                            scrollEnabled={false}
+                            pitchEnabled={false}
+                            rotateEnabled={false}
+                            style={styles.containerMap}
+                            showUserLocation
+                            styleURL={MapboxGL.StyleURL.Dark}
+                        >
+                            <MapboxGL.Camera
+                                zoomLevel={14}
+                                centerCoordinate={[location.lng,location.lat]}
+                            />
+                            {this.renderMapBoxPoint()}
+                        </MapboxGL.MapView>
                     </View>
                     <FlatList
-                        data={tempsChoice}
+                        data={nextTemperatures}
                         style={styles.containerTemps}
-                        renderItem={({item}) => <ListTemp/>}
+                        renderItem={({item, index}) => index > 0 ? <ListTemp data={item} isCelsius={isCelsius}/> : null}
                         showsVerticalScrollIndicator={false}
                         extraData={this.state}
                         scrollEventThrottle={16}
@@ -81,7 +137,6 @@ class DashboardScreen extends Component {
                 </View>
             </View>
         );
-
     }
 }
 
@@ -95,13 +150,20 @@ const styles = StyleSheet.create({
         width: '97%',
         alignSelf: 'center',
         marginTop: 20,
-        marginBottom:60
+        marginBottom: 60
     },
     containerTitle: {
         width: '100%',
         justifyContent: 'space-between',
         alignItems: 'center',
         minHeight: 100,
+    },
+    containerTitleLoad: {
+        width: '100%',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        height: 100,
+        overflow: 'hidden'
     },
     title: {
         fontSize: 25
@@ -122,14 +184,14 @@ const styles = StyleSheet.create({
         marginTop: 10,
         borderWidth: 1,
         borderColor: Colors.GREY_LIGHT,
-        backgroundColor:Colors.WHITE,
+        backgroundColor: Colors.WHITE,
         borderRadius: 3
     },
-    containerTempsError:{
+    containerTempsError: {
         width: '100%',
         height: 170,
-        justifyContent:'center',
-        alignItems:'center'
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     containerOptions: {
         position: 'absolute',
@@ -155,6 +217,21 @@ const styles = StyleSheet.create({
     },
 
 
+    pointContainer: {
+        width: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'white',
+        borderRadius: 15,
+    },
+    pointFill: {
+        width: 20,
+        height: 20,
+        borderRadius: 15,
+        backgroundColor: Colors.VIOLET,
+        transform: [{scale: 0.8}],
+    }
 });
 
 export default DashboardScreen
